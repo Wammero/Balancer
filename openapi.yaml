@@ -1,0 +1,198 @@
+openapi: 3.0.0
+info:
+  title: Balancer API
+  description: API для управления клиентами и проксирования запросов с лимитами
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /health:
+    get:
+      summary: Проверка здоровья сервиса
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /clients:
+    get:
+      summary: Получить список всех клиентов
+      responses:
+        '200':
+          description: Список клиентов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TokenBucket'
+    post:
+      summary: Создать нового клиента
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+      responses:
+        '201':
+          description: Клиент создан, возвращён токен
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          description: Неверный запрос
+
+  /clients/{id}:
+    get:
+      summary: Получить клиента по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о клиенте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenBucket'
+        '400':
+          description: Клиент не найден или ошибка запроса
+    put:
+      summary: Обновить лимиты клиента
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+      responses:
+        '200':
+          description: Успешное обновление
+        '400':
+          description: Ошибка обновления
+    delete:
+      summary: Удалить клиента по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успешное удаление
+        '400':
+          description: Ошибка удаления
+
+  /:
+    get:
+      summary: Прокси-запрос
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Ответ от бэкенда
+        '429':
+          description: Превышен лимит запросов
+        '503':
+          description: Нет доступных бэкендов
+        '502':
+          description: Ошибка запроса к бэкенду
+    post:
+      summary: Прокси-запрос (POST)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Ответ от бэкенда
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    Client:
+      type: object
+      required:
+        - client_id
+        - capacity
+        - rate_per_sec
+      properties:
+        client_id:
+          type: string
+          description: Идентификатор клиента
+          example: "client123"
+        capacity:
+          type: integer
+          description: Максимальное количество токенов
+          example: 10
+        rate_per_sec:
+          type: integer
+          description: Скорость пополнения токенов в секунду
+          example: 1
+
+    TokenBucket:
+      type: object
+      required:
+        - key
+        - tokens
+        - last_refill
+        - tokens_per_second
+        - capacity
+        - created_at
+        - updated_at
+      properties:
+        key:
+          type: string
+          description: ID
+          example: "192"
+        tokens:
+          type: integer
+          description: Текущее количество токенов
+          example: 5
+        last_refill:
+          type: string
+          format: date-time
+          description: Когда последний раз добавляли токены
+          example: "2025-05-04T12:00:00Z"
+        tokens_per_second:
+          type: integer
+          description: Скорость пополнения
+          example: 2
+        capacity:
+          type: integer
+          description: Максимум токенов
+          example: 10
+        created_at:
+          type: string
+          format: date-time
+          description: Когда добавлен
+          example: "2025-05-04T11:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Когда обновлён
+          example: "2025-05-04T12:05:00Z"
