@@ -39,7 +39,7 @@ func (l *tokenBucketLimiter) Check(ctx context.Context, bucket *models.TokenBuck
 	}
 
 	bucket.Tokens--
-	bucket.UpdatedAt = time.Now()
+	bucket.UpdatedAt = now
 
 	return nil
 }
