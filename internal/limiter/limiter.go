@@ -3,7 +3,6 @@ package limiter
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/Wammero/Balancer/internal/models"
@@ -14,7 +13,6 @@ type Limiter interface {
 }
 
 type tokenBucketLimiter struct {
-	mu sync.Mutex
 }
 
 func New() Limiter {
@@ -22,9 +20,6 @@ func New() Limiter {
 }
 
 func (l *tokenBucketLimiter) Check(ctx context.Context, bucket *models.TokenBucket) error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
 	now := time.Now()
 	elapsed := now.Sub(bucket.LastRefill).Seconds()
 
