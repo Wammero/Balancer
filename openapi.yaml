@@ -114,18 +114,6 @@ paths:
           description: Нет доступных бэкендов
         '502':
           description: Ошибка запроса к бэкенду
-    post:
-      summary: Прокси-запрос (POST)
-      security:
-        - bearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        '200':
-          description: Ответ от бэкенда
 
 components:
   securitySchemes:
